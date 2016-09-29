@@ -3,5 +3,8 @@
 
 ---
 
+## 启动
+    /path/to/openresty/nginx/sbin/nginx -c /path/to/nginx.conf -p /path/to
+
 ## plugins/resty 
 refer to [lua-resty-http](https://github.com/pintsized/lua-resty-http)
