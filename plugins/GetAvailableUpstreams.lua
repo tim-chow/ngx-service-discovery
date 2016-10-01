@@ -4,9 +4,10 @@ local BASE_BALANCER = require "BaseBalancer"
 local function get_upstreams()
     local host, uri = ngx.var.arg_host, ngx.var.arg_uri
     if not host or not uri then
+        ngx.status = 400
         ngx.header["Content-Type"] = "text/plain"
         ngx.say("bad argument host or uri")
-        return ngx.exit(400)
+        return
     end
 
     local kick = true
