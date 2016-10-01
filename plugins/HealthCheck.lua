@@ -6,7 +6,6 @@ local unpack = table.unpack or unpack
 local ngx_thread_spawn = ngx.thread.spawn
 local ngx_thread_wait = ngx.thread.wait
 local split = UTIL.split
-
 local _M = {}
 
 local function _make_request(upstream)
@@ -15,7 +14,8 @@ local function _make_request(upstream)
         or CONFIG.DEFAULT_CHECK_TIMEOUT)
 
     local address = split(upstream.address, ":")
-    local ok, err = httpc:connect(address[1], tonumber(address[2]) or 80)
+    local ok, err = httpc:connect(address[1],
+        tonumber(address[2]) or 80)
     if not ok then return ok, err end
 
     local res, err = httpc:request{
@@ -25,7 +25,7 @@ local function _make_request(upstream)
             Host=upstream.host,
         } 
     }
-    httpc:set_keepalive()
+    httpc:set_keepalive() -- XXX: put connection into pool?
     return res, err
 end
 
@@ -34,12 +34,13 @@ local function _execute_health_check(upstream)
     if res and res.status == 200 then
         CONFIG.CLEAR_HEALTH_STATUS(upstream.address)
     else
-        ngx.log(ngx.ERR, upstream.address.." is bad")
+        ngx.log(ngx.ERR, upstream.address..
+            " is bad, because "..tostring(err))
         CONFIG.INCR_HEALTH_STATUS(upstream.address)
     end
 end
 
-local function execute_health_check(upstreams)
+function _M.execute_health_check(upstreams)
     local threads = {}
     for _, upstream in pairs(upstreams) do
         table.insert(threads,
@@ -55,6 +56,5 @@ local function execute_health_check(upstreams)
     end
 end
 
-_M.execute_health_check = execute_health_check
 return _M
 
