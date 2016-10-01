@@ -17,7 +17,7 @@ health_check = function(premature)
                 table.insert(upstreams, upstream)
             end
         end
-        pcall(HEALTH_CHECK.execute_health_check, upstreams)
+        HEALTH_CHECK.execute_health_check(upstreams)
     end
     ngx.timer.at(CONFIG.HEALTH_CHECK_POLL_INTERVAL, health_check)
 end
