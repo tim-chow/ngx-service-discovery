@@ -38,7 +38,7 @@ function _M.get_datacenter_config()
         result, err = red:hmget(full_node_name, unpack(args))
     end
     if not result then return false, 2, err end
-    pcall(_put_conn_into_pool, red)
+    _put_conn_into_pool(red)
     return {target=result[1],
             backup=result[2]~=null and result[2] or nil,
             abtest=result[3]~=null and result[2] or nil}
@@ -74,7 +74,7 @@ function _M.get_upstream_config(dc_config)
             result[one_datacenter] = _combine_upstreams(upstreams)
         end
     end
-    pcall(_put_conn_into_pool, red)
+    _put_conn_into_pool(red)
     return result
 end
 
