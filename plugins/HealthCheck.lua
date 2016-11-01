@@ -1,4 +1,5 @@
 local http = require "resty.http"
+
 local CONFIG = require "MyConfig"
 local UTIL = require "MyUtil"
 
@@ -6,7 +7,10 @@ local unpack = table.unpack or unpack
 local ngx_thread_spawn = ngx.thread.spawn
 local ngx_thread_wait = ngx.thread.wait
 local split = UTIL.split
-local _M = {}
+
+local _M = {
+    __VERSION__ = "2.0"
+}
 
 local function _make_request(upstream)
     local httpc = http.new()
@@ -16,7 +20,7 @@ local function _make_request(upstream)
     local address = split(upstream.address, ":")
     local ok, err = httpc:connect(address[1],
         tonumber(address[2]) or 80)
-    if not ok then return ok, err end
+    if not ok then return false, err end
 
     local res, err = httpc:request{
         method = "GET",
@@ -25,7 +29,7 @@ local function _make_request(upstream)
             Host=upstream.host,
         } 
     }
-    httpc:set_keepalive() -- XXX: put connection into pool?
+    httpc:set_keepalive()
     return res, err
 end
 
@@ -47,8 +51,8 @@ function _M.execute_health_check(upstreams)
             ngx_thread_spawn(
                 _execute_health_check, upstream))
         if #threads >= CONFIG.HEALTH_CHECK_THREAD_COUNT then
-            ngx_thread_wait(unpack(threads))
-            threads = {}
+            ngx_thread_wait(threads[1])
+            table.remove(threads, 1)
         end
     end
     if #threads then
