@@ -3,6 +3,9 @@ local lrucache = require "resty.lrucache"
 local _host_counter_cache = ngx.shared["HOST_ACCESS_COUNT"]
 local _health_check_cache = ngx.shared["HEALTH_CHECK_STATUS"]
 
+local MAX_FAILES = 3
+local FAILED_TIMEOUT=3
+
 local function _get_host_counter_cache_key()
     return ngx.var.host.."@"..ngx.worker.pid()
 end
@@ -14,15 +17,20 @@ local _CONFIG = setmetatable({
         HOST_COUNTER=function() return 
             _host_counter_cache:incr(_get_host_counter_cache_key(),
                 1, 0) or 10086 end,
-        INCR_HEALTH_STATUS=function(address) return
-            _health_check_cache:incr(
-                _get_health_check_cache_key(address), 1, 0) end,
+        INCR_HEALTH_STATUS=function(address)
+            local key = _get_health_check_cache_key(address)
+            local current = _health_check_cache:incr(key, 1, 0)
+            if current == MAX_FAILES+1 then
+                _health_check_cache:set(key, current, FAILED_TIMEOUT)
+            end
+            return current
+        end,
         CLEAR_HEALTH_STATUS=function(address) return
             _health_check_cache:delete(
                 _get_health_check_cache_key(address)) end,
         IS_UPSTREAM_OK=function(address) return
             (_health_check_cache:get(_get_health_check_cache_key(
-                address)) or -1) <= 3 end,
+                address)) or -1) <= MAX_FAILES end,
     },
     {
         __index={ 
