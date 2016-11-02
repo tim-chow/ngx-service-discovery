@@ -2,6 +2,7 @@ local lrucache = require "resty.lrucache"
 
 local _host_counter_cache = ngx.shared["HOST_ACCESS_COUNT"]
 local _health_check_cache = ngx.shared["HEALTH_CHECK_STATUS"]
+local _update_upstreams_lock = ngx.shared["LOCK_FOR_UPDATING_UPSTREAMS"]
 
 local MAX_FAILES = 3
 local FAILED_TIMEOUT=3
@@ -12,8 +13,26 @@ end
 local function _get_health_check_cache_key(address)
     return address.."@"..ngx.worker.pid()
 end
+local function _get_update_upstreams_lock_name()
+    return "LOCK_FOR_UPDATING_UPSTREAMS".."@"..ngx.worker.pid()
+end
 
 local _CONFIG = setmetatable({
+        UPSTREAMS_LOCK=function(unlock)
+            local lockname = _get_update_upstreams_lock_name()
+            if unlock then
+                return _update_upstreams_lock:delete(lockname)
+            end
+
+            local ok, err = _update_upstreams_lock:safe_add(
+                lockname, os.time().."", 3) -- XXX: expired time
+            if ok then return true end
+            if not ok and err == "exists" then
+                return false, 1, err
+            else
+                return false, 2, err
+            end
+        end,
         HOST_COUNTER=function() return 
             _host_counter_cache:incr(_get_host_counter_cache_key(),
                 1, 0) or 10086 end,
@@ -60,6 +79,15 @@ local _CONFIG = setmetatable({
             DEFAULT_CHECK_PATH="/checkstatus",
             HEALTH_CHECK_THREAD_COUNT=10,
             HEALTH_CHECK_POLL_INTERVAL=0.2,
+
+            ADVICE_CENTER="RedisAdviceCenter",
+            -- Redis Advice configuration
+            REDIS_ADVICE_HOST="127.0.0.1",
+            REDIS_ADVICE_PORT=6379,
+            REDIS_ADVICE_PASSWORD=nil,
+            REDIS_ADVICE_CHANNEL="/dubbo/cn.timd.dubbo.demo.DemoService/providers",
+            REDIS_ADVICE_TIMEOUT=2^31,
+            REDIS_ADVICE_RECONNECT_DELAY=0.2,
         },
         __metatable="permission denied",
         __newindex=function() end,
