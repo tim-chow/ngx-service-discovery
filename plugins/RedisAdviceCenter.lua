@@ -8,14 +8,14 @@ local _M = {
 
 local function _do_read()
     while true do
-        local read_reply, err = UTIL.subscribe(
+        local read_reply, code, err = UTIL.subscribe(
             CONFIG.REDIS_ADVICE_HOST,
             CONFIG.REDIS_ADVICE_PORT,
             CONFIG.REDIS_ADVICE_PASSWORD,
             CONFIG.REDIS_ADVICE_CHANNEL,
             CONFIG.REDIS_ADVICE_TIMEOUT)
         if read_reply then return read_reply end
-        ngx.log(ngx.ERR, "UTIL.subscribe failed, err:"..err)
+        ngx.log(ngx.ERR, "UTIL.subscribe failed, code:"..code..", err:"..err)
         ngx.sleep(CONFIG.REDIS_ADVICE_RECONNECT_DELAY)
     end
 end
