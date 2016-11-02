@@ -39,10 +39,16 @@ function _M.subscribe(host, port, password, channel, timeout)
 
     local ok, err = red:connect(host, port)
     if not ok or err then return nil, 1, err end
-    if password then red:auth(password) end
+    if type(password) == "string" then
+        local ok, err = red:auth(password)
+        if not ok then
+            red:close()
+            return nil, 2, err
+        end
+    end
 
     local ok, err = red:subscribe(channel)
-    if not ok or err then return nil, 2, err end
+    if not ok or err then return nil, 3, err end
 
     local function inner(do_read)
         if do_read == false then return red:close() end
