@@ -11,7 +11,7 @@ local _get_config = function()
         local status, up_config, code, msg = pcall(
             get_upstream_config, dc_config)
         if status and up_config then
-            ngx.log(ngx.ERR, "up_config")
+            --ngx.log(ngx.ERR, "up_config")
             CONFIG.UPSTREAM_CACHE:set(CONFIG.UPSTREAM_CACHE_KEY, up_config)
         end
     end
