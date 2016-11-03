@@ -77,7 +77,7 @@ local _CONFIG = setmetatable({
             -- Health check configuration
             DEFAULT_CHECK_TIMEOUT=1000, --unit: ms
             DEFAULT_CHECK_PATH="/checkstatus",
-            HEALTH_CHECK_THREAD_COUNT=10,
+            HEALTH_CHECK_THREAD_COUNT=20,
             HEALTH_CHECK_POLL_INTERVAL=0.2,
 
             ADVICE_CENTER="RedisAdviceCenter",
@@ -86,7 +86,7 @@ local _CONFIG = setmetatable({
             REDIS_ADVICE_PORT=6379,
             REDIS_ADVICE_PASSWORD=nil,
             REDIS_ADVICE_CHANNEL="/dubbo/cn.timd.dubbo.demo.DemoService/providers",
-            REDIS_ADVICE_TIMEOUT=2^31,
+            REDIS_ADVICE_TIMEOUT=10*60*1000, --unit: ms
             REDIS_ADVICE_RECONNECT_DELAY=0.2,
         },
         __metatable="permission denied",
