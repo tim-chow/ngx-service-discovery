@@ -74,11 +74,12 @@ local _CONFIG = setmetatable({
             REDIS_REGISTER_MAX_IDLE_TIME=10000, --unit: ms
             REDIS_REGISTER_POOL_SIZE=2;
 
-            -- Health check configuration
-            DEFAULT_CHECK_TIMEOUT=1000, --unit: ms
-            DEFAULT_CHECK_PATH="/checkstatus",
-            HEALTH_CHECK_THREAD_COUNT=20,
+            HEALTH_CHECK_MODULE="HTTPHealthCheck",
             HEALTH_CHECK_POLL_INTERVAL=0.2,
+            -- HTTP Health Check configuration
+            HTTP_DEFAULT_CHECK_TIMEOUT=1000, --unit: ms
+            HTTP_DEFAULT_CHECK_PATH="/checkstatus",
+            HTTP_CHECK_THREAD_COUNT=20,
 
             ADVICE_CENTER="RedisAdviceCenter",
             -- Redis Advice configuration
