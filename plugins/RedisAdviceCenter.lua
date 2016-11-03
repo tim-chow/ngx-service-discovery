@@ -29,7 +29,8 @@ function _M.hold()
         while true do
             local message, err = read_reply()
             if message then
-                return message[3]
+                return message[4]
+                --return table.concat(message, "\t")
             else
                 ngx.log(ngx.ERR, "reconnecting, because: "..err)
                 read_reply = _do_read()
