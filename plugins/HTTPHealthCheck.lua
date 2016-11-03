@@ -15,7 +15,7 @@ local _M = {
 local function _make_request(upstream)
     local httpc = http.new()
     httpc:set_timeout(tonumber(upstream.checktimeout)
-        or CONFIG.DEFAULT_CHECK_TIMEOUT)
+        or CONFIG.HTTP_DEFAULT_CHECK_TIMEOUT)
 
     local address = split(upstream.address, ":")
     local ok, err = httpc:connect(address[1],
@@ -24,7 +24,7 @@ local function _make_request(upstream)
 
     local res, err = httpc:request{
         method="GET",
-        path=upstream.checkpath or CONFIG.DEFAULT_CHECK_PATH,
+        path=upstream.checkpath or CONFIG.HTTP_DEFAULT_CHECK_PATH,
         headers={
             Host=upstream.host,
         } 
@@ -50,7 +50,7 @@ function _M.execute_health_check(upstreams)
         table.insert(threads,
             ngx_thread_spawn(
                 _execute_health_check, upstream))
-        if #threads >= CONFIG.HEALTH_CHECK_THREAD_COUNT then
+        if #threads >= CONFIG.HTTP_CHECK_THREAD_COUNT then
             ngx_thread_wait(threads[1])
             table.remove(threads, 1)
         end
