@@ -53,15 +53,6 @@ local _CONFIG = setmetatable({
     },
     {
         __index={ 
-            -- Redis configuration
-            REDIS_HOST="127.0.0.1",
-            REDIS_PORT=6379,
-            REDIS_PASSWORD="e839fcfe725611e5:123456_78a1A",
-            REDIS_DB=6,
-            REDIS_TIMEOUT=1000, --unit: ms
-            REDIS_MAX_IDLE_TIME=10000, --unit: ms
-            REDIS_POOL_SIZE=2;
-
             DATA_CENTER="DATA_CENTER-dc1", -- DATA_CENTER-<datacenter name>
             NODE_TYPE="NODE_TYPE-default"; -- NODE_TYPE-<node type>
 
@@ -72,7 +63,16 @@ local _CONFIG = setmetatable({
             UPSTREAM_CACHE_KEY="__UPSTREAM_CACHE_KEY__",
             POLL_INTERVAL=0.2;
             BALANCE_ALG="RR",
+
             REGISTER_CENTER="RedisRegisterCenter",
+            -- Redis Register configuration
+            REDIS_REGISTER_HOST="127.0.0.1",
+            REDIS_REGISTER_PORT=6379,
+            REDIS_REGISTER_PASSWORD="e839fcfe725611e5:123456_78a1A",
+            REDIS_REGISTER_DB=6,
+            REDIS_REGISTER_TIMEOUT=1000, --unit: ms
+            REDIS_REGISTER_MAX_IDLE_TIME=10000, --unit: ms
+            REDIS_REGISTER_POOL_SIZE=2;
 
             -- Health check configuration
             DEFAULT_CHECK_TIMEOUT=1000, --unit: ms
