@@ -47,7 +47,7 @@ function _M.subscribe(host, port, password, channel, timeout)
         end
     end
 
-    local ok, err = red:subscribe(channel)
+    local ok, err = red:psubscribe(channel) --XXX: psubscribe
     if not ok or err then return nil, 3, err end
 
     local function inner(do_read)
