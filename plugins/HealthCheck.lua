@@ -23,7 +23,7 @@ local function _make_request(upstream)
     if not ok then return false, err end
 
     local res, err = httpc:request{
-        method = "GET",
+        method="GET",
         path=upstream.checkpath or CONFIG.DEFAULT_CHECK_PATH,
         headers={
             Host=upstream.host,
