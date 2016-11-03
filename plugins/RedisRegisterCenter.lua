@@ -8,19 +8,21 @@ local _M = {}
 
 local function _create_connection()
     local red = redis:new()
-    red:set_timeout(CONFIG.REDIS_TIMEOUT)
-    local ok, err = red:connect(CONFIG.REDIS_HOST, CONFIG.REDIS_PORT)
+    red:set_timeout(CONFIG.REDIS_REGISTER_TIMEOUT)
+    local ok, err = red:connect(CONFIG.REDIS_REGISTER_HOST, 
+        CONFIG.REDIS_REGISTER_PORT)
     if not ok then return false, err end
-    if type(CONFIG.REDIS_PASSWORD) == "string" then
-        red:auth(CONFIG.REDIS_PASSWORD)
+    if type(CONFIG.REDIS_REGISTER_PASSWORD) == "string" then
+        red:auth(CONFIG.REDIS_REGISTER_PASSWORD)
     end
-    red:select(CONFIG.REDIS_DB)
+    red:select(CONFIG.REDIS_REGISTER_DB)
     return red
 end
 
 local function _put_conn_into_pool(red)
-    local ok, err = red:set_keepalive(CONFIG.REDIS_MAX_IDLE_TIME,
-        CONFIG.REDIS_POOL_SIZE)
+    local ok, err = red:set_keepalive(
+        CONFIG.REDIS_REGISTER_MAX_IDLE_TIME,
+        CONFIG.REDIS_REGISTER_POOL_SIZE)
     if not ok then return false, err end
     return true
 end
