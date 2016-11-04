@@ -26,37 +26,6 @@ local function myrandom(...)
     return math.random(...)
 end
 
-function _M.subscribe(host, port, password, channel, timeout)
-    local host = host or "127.0.0.1"
-    local port = tonumber(port) or 6379
-    if type(channel) ~= "string" then
-        error("invalid channel", 2)
-    end
-    local timeout = tonumber(timeout)
-
-    local red = redis:new()
-    if timeout then red:set_timeout(timeout) end
-
-    local ok, err = red:connect(host, port)
-    if not ok or err then return nil, 1, err end
-    if type(password) == "string" then
-        local ok, err = red:auth(password)
-        if not ok then
-            red:close()
-            return nil, 2, err
-        end
-    end
-
-    local ok, err = red:psubscribe(channel) --XXX: psubscribe
-    if not ok or err then return nil, 3, err end
-
-    local function inner(do_read)
-        if do_read == false then return red:close() end
-        return red:read_reply()
-    end
-    return inner
-end
-
 local function parseQueryString(str)
     local pos, result = 1, {}
 
