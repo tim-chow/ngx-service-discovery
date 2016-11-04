@@ -1,5 +1,19 @@
 local CONFIG = require "MyConfig"
 
+local QUIT, signal_handler = false
+signal_handler = function(premature)
+    if premature then
+        QUIT = true
+        ngx.log(ngx.ERR, "nginx is stopping or reloading...")
+        return
+    end
+    QUIT = false
+    ngx.log(ngx.ERR, "nginx worker "..ngx.worker.pid().." is running...")
+    ngx.timer.at(10 * 60, signal_handler)
+end
+ngx.timer.at(0, signal_handler)
+
+
 local register_center = require(CONFIG.REGISTER_CENTER)
 local get_datacenter_config = register_center.get_datacenter_config
 local get_upstream_config = register_center.get_upstream_config
@@ -60,20 +74,31 @@ if type(CONFIG.HEALTH_CHECK_MODULE) == "string" then
 end
 
 if type(CONFIG.ADVICE_CENTER) == "string" then 
-    local hold_advice
     local advice_center = require(CONFIG.ADVICE_CENTER)
 
-    hold_advice = function(premature)
+    local hold_advice = function(premature)
         if premature then return end
 
         local advice_center_hold = advice_center.hold()
         while true do
-            message_type = advice_center_hold(true)
-            ngx.log(ngx.ERR, "message_type: "..message_type)
-            local lock, code, err = CONFIG.UPSTREAMS_LOCK(false)
-            if lock then
-                pcall(_get_config)
-                CONFIG.UPSTREAMS_LOCK(true)
+            if QUIT then
+                advice_center_hold(false)
+                ngx.log(ngx.ERR, "QUIT is "..tostring(QUIT))
+                break
+            end
+
+            local message_type, err = advice_center_hold(true)
+            if message_type then
+                ngx.log(ngx.ERR, "message_type: "..message_type)
+                local lock, code, err = CONFIG.UPSTREAMS_LOCK(false)
+                if lock then
+                    pcall(_get_config)
+                    CONFIG.UPSTREAMS_LOCK(true)
+                end
+            elseif err == "timeout" then
+                local _ = false -- just a NULL STATEMENT
+            else
+                ngx.sleep(CONFIG.REDIS_ADVICE_RECONNECT_DELAY)
             end
         end
     end
