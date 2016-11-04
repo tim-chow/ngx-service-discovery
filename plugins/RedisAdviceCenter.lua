@@ -50,9 +50,16 @@ local function make_red_conn()
 end
 
 function _M.hold()
-    local red = make_red_conn()
+    local red, code, err = make_red_conn()
     local function _do_deal(read)
-        if read == false then return red:close() end
+        if read == false then return red and red:close() end
+
+        if not red then
+            red, code, err = make_red_conn()
+            if not red then
+                return red, code, err
+            end
+        end
 
         red:set_timeout(CONFIG.REDIS_ADVICE_TIMEOUT)
         local res, err = red:read_reply()
