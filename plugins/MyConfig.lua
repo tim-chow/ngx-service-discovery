@@ -87,8 +87,9 @@ local _CONFIG = setmetatable({
             REDIS_ADVICE_PORT=6379,
             REDIS_ADVICE_PASSWORD=nil,
             REDIS_ADVICE_CHANNEL="/dubbo/*",
-            REDIS_ADVICE_TIMEOUT=10*60*1000, --unit: ms
+            REDIS_ADVICE_CONNECT_TIMEOUT=10*60*1000, --unit: ms
             REDIS_ADVICE_RECONNECT_DELAY=0.2,
+            REDIS_ADVICE_TIMEOUT=1*1000, --unit: ms
         },
         __metatable="permission denied",
         __newindex=function() end,
