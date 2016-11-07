@@ -14,8 +14,9 @@ local _M = {
 
 local function _make_request(upstream)
     local httpc = http.new()
-    httpc:set_timeout(tonumber(upstream.checktimeout)
-        or CONFIG.HTTP_DEFAULT_CHECK_TIMEOUT)
+    httpc:set_timeout(
+        tonumber(upstream.checktimeout) or 
+        CONFIG.HTTP_DEFAULT_CHECK_TIMEOUT)
 
     local address = split(upstream.address, ":")
     local ok, err = httpc:connect(address[1],
@@ -55,7 +56,7 @@ function _M.execute_health_check(upstreams)
             table.remove(threads, 1)
         end
     end
-    if #threads then
+    if #threads > 0 then
         ngx_thread_wait(unpack(threads))
     end
 end
