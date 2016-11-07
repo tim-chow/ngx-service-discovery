@@ -65,7 +65,9 @@ if type(CONFIG.HEALTH_CHECK_MODULE) == "string" then
                     table.insert(upstreams, upstream)
                 end
             end
-            HEALTH_CHECK.execute_health_check(upstreams)
+            if #upstreams > 0 then
+                HEALTH_CHECK.execute_health_check(upstreams)
+            end
         end
         ngx.timer.at(CONFIG.HEALTH_CHECK_POLL_INTERVAL, health_check)
     end
