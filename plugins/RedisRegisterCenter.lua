@@ -9,13 +9,25 @@ local _M = {}
 local function _create_connection()
     local red = redis:new()
     red:set_timeout(CONFIG.REDIS_REGISTER_TIMEOUT)
-    local ok, err = red:connect(CONFIG.REDIS_REGISTER_HOST, 
+    local ok, err = red:connect(
+        CONFIG.REDIS_REGISTER_HOST,
         CONFIG.REDIS_REGISTER_PORT)
     if not ok then return false, err end
+
     if type(CONFIG.REDIS_REGISTER_PASSWORD) == "string" then
-        red:auth(CONFIG.REDIS_REGISTER_PASSWORD)
+        local ok, err = red:auth(CONFIG.REDIS_REGISTER_PASSWORD)
+        if not ok then
+            red:close()
+            return false, err
+        end
     end
-    red:select(CONFIG.REDIS_REGISTER_DB)
+    
+    local ok, err = red:select(CONFIG.REDIS_REGISTER_DB)
+    if not ok then
+        red:close()
+        return false, err
+    end
+
     return red
 end
 
