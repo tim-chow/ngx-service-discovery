@@ -1,5 +1,3 @@
-local redis = require "resty.redis"
-
 local _M = {
     __VERSION__ = "2.0"
 }
