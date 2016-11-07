@@ -6,7 +6,6 @@ local _M = {
 }
 
 local function _make_red_conn(host, port, password, timeout, channel)
-    ngx.log(ngx.ERR, "_make_red_conn() is invoked...")
     local host = host or "127.0.0.1"
     local port = tonumber(port) or 6379
     local timeout = tonumber(timeout)
