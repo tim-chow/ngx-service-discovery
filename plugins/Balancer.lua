@@ -8,7 +8,23 @@ local function is_abtest()
     return false
 end
 
-local function balance(host, uri, kick, balance_alg)
+local function balance(host, uri, kick, balance_alg, max_retries)
+    local state_name, status_code = balancer.get_last_failure()
+    if type(state_name) == "string" then
+        ngx.log(ngx.ERR, "proxy request failed, because "..
+            "state_name: "..state_name..", status_code: "..
+            tostring(status_code))
+    end
+    if type(max_retries) == "number" and max_retries > 0 then
+        local ok, err = balancer.set_more_tries(1) --XXX
+        if not ok then
+            ngx.log(ngx.ERR, "set_more_tries"..
+                " failed, because: "..tostring(err))
+            --return ngx.exit(500)
+        end
+    end
+
+
     local target, backup, abtest = BASE_BALANCER.available_upstreams(
         host, uri, kick)
 
@@ -30,5 +46,6 @@ local function balance(host, uri, kick, balance_alg)
     end
 end
 
-balance(ngx.var.host, ngx.var.uri, true, CONFIG.BALANCE_ALG)
+balance(ngx.var.host, ngx.var.uri, true,
+    CONFIG.BALANCE_ALG, CONFIG.MAX_RETRIES)
 
