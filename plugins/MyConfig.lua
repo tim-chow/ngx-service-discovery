@@ -19,6 +19,7 @@ local _mt = {
         UPSTREAM_CACHE_KEY="__UPSTREAM_CACHE_KEY__",
         POLL_INTERVAL=0.2,
         BALANCE_ALG="RR";
+        MAX_RETRIES=5;
 
         REGISTER_CENTER="RedisRegisterCenter",
         -- Redis Register configuration
