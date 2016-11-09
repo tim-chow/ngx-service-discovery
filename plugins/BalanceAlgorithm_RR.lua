@@ -11,6 +11,7 @@ function _M.choice(upstreams)
 
     local current = CONFIG.HOST_COUNTER()
     local where = current % total_weight
+    where = where == 0 and total_weight or where
     --ngx.header["Where"] = tostring(where)
     ngx.header["Current"] = ngx.worker.pid() .. "-" .. current
     --ngx.header["Total-Weight"] = total_weight .. ""
