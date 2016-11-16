@@ -17,32 +17,32 @@ local _mt = {
         DC_CACHE_KEY="__DC_CACHE_KEY__",
         UPSTREAM_CACHE=_upstream_cache,
         UPSTREAM_CACHE_KEY="__UPSTREAM_CACHE_KEY__",
-        POLL_INTERVAL=0.2,
+        POLL_INTERVAL=1,
         BALANCE_ALG="RR";
         MAX_RETRIES=5;
 
         REGISTER_CENTER="RedisRegisterCenter",
         -- Redis Register configuration
         REDIS_REGISTER_HOST="127.0.0.1",
-        REDIS_REGISTER_PORT=6379,
-        REDIS_REGISTER_PASSWORD="e839fcfe725611e5:123456_78a1A",
-        REDIS_REGISTER_DB=6,
+        REDIS_REGISTER_PORT=6380,
+        REDIS_REGISTER_PASSWORD="timchow",
+        REDIS_REGISTER_DB=0,
         REDIS_REGISTER_TIMEOUT=1000, --unit: ms
         REDIS_REGISTER_MAX_IDLE_TIME=10000, --unit: ms
         REDIS_REGISTER_POOL_SIZE=2;
 
         HEALTH_CHECK_MODULE="HTTPHealthCheck",
-        HEALTH_CHECK_POLL_INTERVAL=0.2,
+        HEALTH_CHECK_POLL_INTERVAL=0.8,
         -- HTTP Health Check configuration
         HTTP_DEFAULT_CHECK_TIMEOUT=3*1000, --unit: ms
         HTTP_DEFAULT_CHECK_PATH="/checkstatus",
-        HTTP_CHECK_THREAD_COUNT=20,
+        HTTP_CHECK_THREAD_COUNT=25,
 
         ADVICE_CENTER="RedisAdviceCenter",
         -- Redis Advice configuration
         REDIS_ADVICE_HOST="127.0.0.1",
-        REDIS_ADVICE_PORT=6379,
-        REDIS_ADVICE_PASSWORD="e839fcfe725611e5:123456_78a1A",
+        REDIS_ADVICE_PORT=6380,
+        REDIS_ADVICE_PASSWORD="timchow",
         REDIS_ADVICE_CHANNEL="/dubbo/*",
         REDIS_ADVICE_CONNECT_TIMEOUT=10*60*1000, --unit: ms
         REDIS_ADVICE_RECONNECT_DELAY=0.2,
@@ -53,54 +53,47 @@ local _mt = {
 }
 
 
-
-local _host_counter_cache = ngx.shared["HOST_ACCESS_COUNT"]
-local _update_upstreams_lock = ngx.shared["LOCK_FOR_UPDATING_UPSTREAMS"]
-local _health_check_cache = ngx.shared["HEALTH_CHECK_STATUS"]
 local MAX_FAILES = 3
 
-local function _get_host_counter_cache_key()
-    return ngx.var.host.."@"..ngx.worker.pid()
-end
-function _CONFIG.HOST_COUNTER()
-    return _host_counter_cache:incr(
-        _get_host_counter_cache_key(), 1, 0) or 10086
+local _host_counter_cache = lrucache.new(100)
+local _update_upstreams_lock = lrucache.new(1)
+local _health_check_cache = lrucache.new(1000)
+if (not _host_counter_cache or
+        not _update_upstreams_lock or
+        not _health_check_cache) then
+    error("create cache failed")
 end
 
-local function _get_update_upstreams_lock_name()
-    return "LOCK_FOR_UPDATING_UPSTREAMS".."@"..ngx.worker.pid()
+function _CONFIG.HOST_COUNTER()
+    local key = ngx.var.host
+    local current = _host_counter_cache:get(key) or 0
+    _host_counter_cache:set(key, current + 1)
+    return current + 1
 end
+
 function _CONFIG.UPSTREAMS_LOCK(unlock)
-    local lockname = _get_update_upstreams_lock_name()
+    local lockname = "__LOCK_FOR_UPDATING_UPSTREAMS__"
     if unlock then
         return _update_upstreams_lock:delete(lockname)
     end
 
-    local ok, err = _update_upstreams_lock:safe_add(
-        lockname, os.time().."", 6) -- XXX: expired time
-    if ok then return true end
-    if err == "exists" then
-        return false, 1, err
-    else
-        return false, 2, err
-    end
+    local data = _update_upstreams_lock:get(lockname)
+    if data then return false, 1 end
+    _update_upstreams_lock:set(lockname, os.time().."", 6)
+    return true
 end
 
-local function _get_health_check_cache_key(address)
-    return address.."@"..ngx.worker.pid()
-end
 function _CONFIG.INCR_HEALTH_STATUS(address)
-    local key = _get_health_check_cache_key(address)
-    return _health_check_cache:incr(key, 1, 0)
+    local current = _health_check_cache:get(address) or 0
+    _health_check_cache:set(address, current + 1)
+    return current + 1
 end
+
 function _CONFIG.CLEAR_HEALTH_STATUS(address)
-    return _health_check_cache:delete(
-            _get_health_check_cache_key(address))
+    return _health_check_cache:delete(address)
 end
 function _CONFIG.IS_UPSTREAM_OK(address)
-    return (_health_check_cache:get(
-                _get_health_check_cache_key(
-                    address)) or -1) <= MAX_FAILES
+    return (_health_check_cache:get(address) or -1) <= MAX_FAILES
 end
 
 setmetatable(_CONFIG, _mt)
