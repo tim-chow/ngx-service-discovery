@@ -20,6 +20,7 @@ local _mt = {
         POLL_INTERVAL=1,
         BALANCE_ALG="RR";
         MAX_RETRIES=5;
+        VERIFY_HOST=false;
 
         REGISTER_CENTER="RedisRegisterCenter",
         -- Redis Register configuration
