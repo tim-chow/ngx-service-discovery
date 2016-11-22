@@ -5,7 +5,8 @@ local _M = {}
 local function filter_upstreams(upstreams, host, uri, kick)
     local result = {}
     for _, upstream in pairs(upstreams) do
-        if (host == upstream.hostname) and ngx.re.match(uri,
+        if (not CONFIG.VERIFY_HOST or host == 
+            upstream.hostname) and ngx.re.match(uri,
                 upstream.uripattern) then
             if not kick or CONFIG.IS_UPSTREAM_OK(upstream.address) then
                 table.insert(result, upstream)
