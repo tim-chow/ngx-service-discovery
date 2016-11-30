@@ -32,12 +32,14 @@ local _mt = {
         REDIS_REGISTER_MAX_IDLE_TIME=10000, --unit: ms
         REDIS_REGISTER_POOL_SIZE=2;
 
+        --[[
         HEALTH_CHECK_MODULE="HTTPHealthCheck",
         HEALTH_CHECK_POLL_INTERVAL=0.8,
         -- HTTP Health Check configuration
         HTTP_DEFAULT_CHECK_TIMEOUT=3*1000, --unit: ms
         HTTP_DEFAULT_CHECK_PATH="/checkstatus",
         HTTP_CHECK_THREAD_COUNT=25,
+        --]]
 
         ADVICE_CENTER="RedisAdviceCenter",
         -- Redis Advice configuration
@@ -95,6 +97,23 @@ function _CONFIG.CLEAR_HEALTH_STATUS(address)
 end
 function _CONFIG.IS_UPSTREAM_OK(address)
     return (_health_check_cache:get(address) or -1) <= MAX_FAILES
+end
+
+_degrade_upstream_cache = lrucache.new(1000)
+if not _degrade_upstream_cache then
+    error("create cache failed")
+end
+
+local DEGRADE_COUNT = 3
+local TIME_PERIOD = 2
+function _CONFIG.DEGRADE(address)
+    local current = _degrade_upstream_cache:get(address) or 0
+    _degrade_upstream_cache:set(address, current+1, TIME_PERIOD)
+end
+function _CONFIG.IS_IN_DEGRADE(address)
+    local current = _degrade_upstream_cache:get(address) or 0
+    if current > DEGRADE_COUNT then return true end
+    return false
 end
 
 setmetatable(_CONFIG, _mt)
