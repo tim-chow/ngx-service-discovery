@@ -2,16 +2,17 @@ local CONFIG = require "MyConfig"
 local UTIL = require "MyUtil"
 local _M = {}
 
-local function filter_upstreams(upstreams, host, uri, kick)
+local function filter_upstreams(dc, upstreams, host, uri, kick)
     local result = {}
     for _, upstream in pairs(upstreams) do
         if (not CONFIG.VERIFY_HOST or host == 
             upstream.hostname) and ngx.re.match(uri,
                 upstream.uripattern) then
-            if not kick or CONFIG.IS_UPSTREAM_OK(upstream.address) then
-                if not CONFIG.IS_IN_DEGRADE(upstream.address) then
+            if (not kick or CONFIG.IS_UPSTREAM_OK(
+                    upstream.address)) and not CONFIG.IS_IN_DEGRADE(
+                        upstream.address) and (not CONFIG.
+                            IS_IN_BLACKLIST(dc, upstream.address)) then 
                     table.insert(result, upstream)
-                end
             end
         end
     end
@@ -45,10 +46,13 @@ function _M.available_upstreams(...)
     end
 
     local target_upstreams = filter_upstreams(
+            dc_config.target,
             up_config[dc_config.target] or {}, ...)
     local backup_upstreams = filter_upstreams(
+            dc_config.backup,
             up_config[dc_config.backup] or {}, ...)
     local abtest_upstreams = filter_upstreams(
+            dc_config.abtest,
             up_config[dc_config.abtest] or {}, ...)
     return target_upstreams, backup_upstreams, abtest_upstreams
 end

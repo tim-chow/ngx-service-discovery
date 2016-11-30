@@ -17,6 +17,7 @@ ngx.timer.at(0, signal_handler)
 local register_center = require(CONFIG.REGISTER_CENTER)
 local get_datacenter_config = register_center.get_datacenter_config
 local get_upstream_config = register_center.get_upstream_config
+local get_blacklist_config = register_center.get_blacklist_config
 
 local _get_config = function()
     local status, dc_config, code, msg = pcall(get_datacenter_config)
@@ -27,6 +28,13 @@ local _get_config = function()
         if status and up_config then
             --ngx.log(ngx.ERR, "up_config")
             CONFIG.UPSTREAM_CACHE:set(CONFIG.UPSTREAM_CACHE_KEY, up_config)
+        end
+
+        local status, blacklist_config, code, msg = pcall(
+            get_blacklist_config, dc_config)
+        if status and blacklist_config then
+            CONFIG.BLACKLIST_CACHE:set(CONFIG.BLACKLIST_CACHE_KEY,
+                blacklist_config)
         end
     end
 end

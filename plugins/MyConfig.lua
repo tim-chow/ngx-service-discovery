@@ -3,7 +3,9 @@ local _CONFIG = {}
 
 local _dc_cache = lrucache.new(1)
 local _upstream_cache = lrucache.new(1)
-if not _dc_cache or not _upstream_cache then
+local _blacklist_cache = lrucache.new(1)
+if (not _dc_cache or not _upstream_cache or 
+        not _blacklist_cache) then
     error("create cache failed")
 end
 
@@ -11,12 +13,15 @@ local _mt = {
     __index={ 
         DATA_CENTER="DATA_CENTER-dc1",
         NODE_TYPE="NODE_TYPE-default";
+        BLACK_LIST_PREFIX="BLACK_LIST:";
 
         -- NGINX Worker configuration
         DC_CACHE=_dc_cache,
         DC_CACHE_KEY="__DC_CACHE_KEY__",
         UPSTREAM_CACHE=_upstream_cache,
         UPSTREAM_CACHE_KEY="__UPSTREAM_CACHE_KEY__",
+        BLACKLIST_CACHE=_blacklist_cache,
+        BLACKLIST_CACHE_KEY="__BLACKLIST_CACHE_KEY__",
         POLL_INTERVAL=1,
         BALANCE_ALG="RR";
         MAX_RETRIES=5;
@@ -114,6 +119,14 @@ function _CONFIG.IS_IN_DEGRADE(address)
     local current = _degrade_upstream_cache:get(address) or 0
     if current > DEGRADE_COUNT then return true end
     return false
+end
+
+function _CONFIG.IS_IN_BLACKLIST(dc, address)
+    local dc2bls = _CONFIG.BLACKLIST_CACHE:get(
+        _CONFIG.BLACKLIST_CACHE_KEY) or {}
+    local ts = tonumber((dc2bls[dc] or {})[address])
+    if not ts or ts < os.time() then return false end
+    return true
 end
 
 setmetatable(_CONFIG, _mt)

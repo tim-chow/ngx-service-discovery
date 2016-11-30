@@ -92,5 +92,30 @@ function _M.get_upstream_config(dc_config)
     return result
 end
 
+local function _generate_table(upstreams)
+    local result = {}
+    for ind=1, #upstreams-1, 2 do
+        result[upstreams[ind]] = upstreams[ind+1]
+    end
+    return result
+end
+
+function _M.get_blacklist_config(dc_config)
+    local red, err = _create_connection()
+    if not red then return false, 1, err end
+
+    local result = {}
+    for _, one_datacenter in pairs(_all_needed_dcs(dc_config)) do
+        if not result[one_datacenter] then
+            local hashtable = CONFIG.BLACK_LIST_PREFIX..one_datacenter
+            local upstreams, err = red:hgetall(hashtable)
+            if not upstreams then return false, 2, err end
+            result[one_datacenter] = _generate_table(upstreams)
+        end
+    end
+    _put_conn_into_pool(red)
+    return result
+end
+
 return _M
 
