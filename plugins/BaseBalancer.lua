@@ -9,7 +9,9 @@ local function filter_upstreams(upstreams, host, uri, kick)
             upstream.hostname) and ngx.re.match(uri,
                 upstream.uripattern) then
             if not kick or CONFIG.IS_UPSTREAM_OK(upstream.address) then
-                table.insert(result, upstream)
+                if not CONFIG.IS_IN_DEGRADE(upstream.address) then
+                    table.insert(result, upstream)
+                end
             end
         end
     end
