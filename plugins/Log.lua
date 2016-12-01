@@ -12,9 +12,6 @@ local function execute_degrade(error_codes, upstream_addr)
 end
 
 local function main()
-    local dc_config = CONFIG.DC_CACHE:get(
-        CONFIG.DC_CACHE_KEY)
-    if not dc_config then return end
     local up_config = CONFIG.UPSTREAM_CACHE:get(
         CONFIG.UPSTREAM_CACHE_KEY)
     if not up_config then return end
