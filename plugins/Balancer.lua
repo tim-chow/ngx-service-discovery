@@ -46,6 +46,7 @@ local function balance(host, uri, kick, balance_alg, max_retries)
     end
 end
 
-balance(ngx.var.host, ngx.var.uri, true,
+balance(ngx.var.host, ngx.var.uri, 
+    CONFIG.HEALTH_CHECK_MODULE and true or false,
     CONFIG.BALANCE_ALG, CONFIG.MAX_RETRIES)
 
