@@ -48,7 +48,7 @@ function _M.get_datacenter_config()
 
     result, err = red:hmget(full_node_name, unpack(args))
     if result[1] == null then
-        red:hset(full_node_name, "target", CONFIG.DATA_CENTER)
+        red:hsetnx(full_node_name, "target", CONFIG.DATA_CENTER)
         result, err = red:hmget(full_node_name, unpack(args))
     end
     if not result then return false, 2, err end
